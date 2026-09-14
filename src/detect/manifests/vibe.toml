@@ -21,9 +21,10 @@ state = "idle"
 priority = 700
 region = "bottom_non_empty_lines(5)"
 visible_idle = true
-line_regex = ['^\s*[>\u{276F}]\s*$']
+line_regex = ['^\\s*[>❯]\\s*$']
 not = [
   { contains = ["esc to cancel"] },
+  { contains = ["Do you want to"] },
   { contains = ["Press Enter"] },
 ]
 
@@ -45,8 +46,8 @@ state = "working"
 priority = 900
 region = "bottom_non_empty_lines(8)"
 visible_working = true
-contains = ["..."]
-line_regex = ['^\s*[\x{2800}-\x{28FF}\x{2588}\x{2591}-\x{2593}\x{25D0}-\x{25D3}]']
+contains = ["Generating"]
+line_regex = ['^\\s*[◐◓◑◒]']
 
 [[rules]]
 id = "processing_working"
@@ -54,7 +55,7 @@ state = "working"
 priority = 800
 region = "bottom_non_empty_lines(8)"
 visible_working = true
-line_regex = ['^(?i)\s*(processing|thinking|generating|executing|running)']
+line_regex = ['^(?i)\s[◐◓◑◒]*(processing|thinking|generating|executing|running)']
 
 [[rules]]
 id = "streaming_working"
