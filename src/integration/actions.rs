@@ -314,6 +314,10 @@ fn install_target_inner(target: crate::api::schema::IntegrationTarget) -> io::Re
                 ),
             ]
         }
+        crate::api::schema::IntegrationTarget::Vibe => {
+            // Vibe integration hooks not yet implemented
+            vec![]
+        }
     };
 
     if let Some(warning) = version_warning {
@@ -766,6 +770,10 @@ pub(crate) fn uninstall_target(
                 ));
             }
             messages
+        }
+        crate::api::schema::IntegrationTarget::Vibe => {
+            // Vibe integration hooks not yet implemented
+            vec![]
         }
     };
 

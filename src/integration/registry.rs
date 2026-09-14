@@ -25,6 +25,7 @@ pub(crate) fn integration_target_label(
         crate::api::schema::IntegrationTarget::Mastracode => "mastracode",
         crate::api::schema::IntegrationTarget::AntigravityCli => "antigravity-cli",
         crate::api::schema::IntegrationTarget::Grok => "grok",
+        crate::api::schema::IntegrationTarget::Vibe => "vibe",
     }
 }
 
@@ -55,6 +56,7 @@ pub(crate) fn integration_target_command_names(
         crate::api::schema::IntegrationTarget::Mastracode => &["mastracode"],
         crate::api::schema::IntegrationTarget::AntigravityCli => &["agy"],
         crate::api::schema::IntegrationTarget::Grok => &["grok"],
+        crate::api::schema::IntegrationTarget::Vibe => &["vibe"],
     }
 }
 
@@ -84,6 +86,7 @@ pub(crate) fn integration_target_supported(target: crate::api::schema::Integrati
                 | crate::api::schema::IntegrationTarget::Cursor
                 | crate::api::schema::IntegrationTarget::Mastracode
                 | crate::api::schema::IntegrationTarget::Grok
+                | crate::api::schema::IntegrationTarget::Vibe
         )
     }
 

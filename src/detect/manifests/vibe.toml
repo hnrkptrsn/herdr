@@ -1,0 +1,134 @@
+id = "vibe"
+version = "2026.09.14.1"
+min_engine_version = 2
+updated_at = "2026-09-14T00:00:00Z"
+aliases = ["vibe-cli"]
+
+# Evidence notes:
+# Vibe CLI is a Mistral AI coding agent with terminal UI.
+# Idle: Shows a prompt (typically ">" or similar) at the bottom
+# Working: Shows spinner characters (braille dots, etc.) with activity text
+# Blocked: Shows approval prompts for tool calls
+#
+# Patterns based on Vibe CLI behavior:
+# - Idle: prompt visible, waiting for user input
+# - Working: spinner + "..." or tool execution indicators
+# - Blocked: "Do you want to proceed?" or tool approval dialogs
+
+[[rules]]
+id = "prompt_idle"
+state = "idle"
+priority = 700
+region = "bottom_non_empty_lines(5)"
+visible_idle = true
+line_regex = ['^\s*[>\u{276F}]\s*$']
+not = [
+  { contains = ["esc to cancel"] },
+  { contains = ["Press Enter"] },
+]
+
+[[rules]]
+id = "prompt_with_context_idle"
+state = "idle"
+priority = 650
+region = "bottom_non_empty_lines(5)"
+visible_idle = true
+line_regex = ['^\s*[>\u{276F}]\s+\S']
+not = [
+  { contains = ["esc to cancel"] },
+  { contains = ["Press Enter"] },
+]
+
+[[rules]]
+id = "spinner_working"
+state = "working"
+priority = 900
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+contains = ["..."]
+line_regex = ['^\s*[\x{2800}-\x{28FF}\x{2588}\x{2591}-\x{2593}\x{25D0}-\x{25D3}]']
+
+[[rules]]
+id = "processing_working"
+state = "working"
+priority = 800
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+line_regex = ['^(?i)\s*(processing|thinking|generating|executing|running)']
+
+[[rules]]
+id = "streaming_working"
+state = "working"
+priority = 750
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+contains = ["streaming"]
+
+[[rules]]
+id = "tool_approval_blocked"
+state = "blocked"
+priority = 950
+region = "whole_recent"
+visible_blocker = true
+contains = ["Do you want to proceed?"]
+any = [
+  { contains = ["allow"] },
+  { contains = ["deny"] },
+  { contains = ["yes"] },
+  { contains = ["no"] },
+]
+
+[[rules]]
+id = "permission_prompt_blocked"
+state = "blocked"
+priority = 900
+region = "after_last_horizontal_rule"
+visible_blocker = true
+any = [
+  { contains = ["Do you want to allow"] },
+  { contains = ["Do you want to run"] },
+  { contains = ["Press Enter to continue"] },
+]
+
+[[rules]]
+id = "enter_to_continue_blocked"
+state = "blocked"
+priority = 850
+region = "bottom_non_empty_lines(8)"
+visible_blocker = true
+contains = ["Press Enter to continue"]
+
+[[rules]]
+id = "approval_options_blocked"
+state = "blocked"
+priority = 800
+region = "whole_recent"
+visible_blocker = true
+any = [
+  { all = [
+    { contains = ["allow"] },
+    { any = [
+      { contains = ["deny"] },
+      { contains = ["reject"] },
+      { contains = ["cancel"] },
+    ] },
+  ] },
+  { all = [
+    { contains = ["yes"] },
+    { any = [
+      { contains = ["no"] },
+      { contains = ["cancel"] },
+    ] },
+  ] },
+]
+
+[[rules]]
+id = "esc_cancel_working"
+state = "working"
+priority = 100
+region = "whole_recent"
+visible_working = true
+contains = ["esc to cancel"]
+not = [
+  { contains = ["Press Enter to continue"] },
+]

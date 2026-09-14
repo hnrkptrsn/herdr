@@ -252,6 +252,7 @@ fn windows_supports_portable_integrations() {
     assert!(integration_target_supported(IntegrationTarget::Devin));
     assert!(integration_target_supported(IntegrationTarget::Mastracode));
     assert!(integration_target_supported(IntegrationTarget::Grok));
+    assert!(integration_target_supported(IntegrationTarget::Vibe));
 
     assert!(integration_target_supported(IntegrationTarget::Pi));
     assert!(integration_target_supported(IntegrationTarget::Omp));
