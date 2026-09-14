@@ -1,5 +1,5 @@
 id = "vibe"
-version = "2026.09.14.2"
+version = "2026.09.14.3"
 min_engine_version = 2
 updated_at = "2026-09-14T00:00:00Z"
 aliases = ["vibe-cli"]
@@ -18,23 +18,24 @@ aliases = ["vibe-cli"]
 [[rules]]
 id = "prompt_idle"
 state = "idle"
-priority = 700
-region = "bottom_non_empty_lines(5)"
+priority = 760
+region = "bottom_non_empty_lines(8)"
 visible_idle = true
-line_regex = ['^\\s*[>❯]\\s*$']
+line_regex = ['^[>❯]$']
 not = [
   { contains = ["esc to cancel"] },
   { contains = ["Do you want to"] },
   { contains = ["Press Enter"] },
+  { line_regex = ['^[\u{2800}-\u{28FF}]+'] },
 ]
 
 [[rules]]
 id = "prompt_with_context_idle"
 state = "idle"
-priority = 650
+priority = 755
 region = "bottom_non_empty_lines(5)"
 visible_idle = true
-line_regex = ['^\s*[>\u{276F}]\s+\S']
+line_regex = ['^[>\u{276F}]\s+\S']
 not = [
   { contains = ["esc to cancel"] },
   { contains = ["Press Enter"] },
@@ -77,10 +78,13 @@ line_regex = ['^[\s\u{2800}-\u{28FF}]+\s+(?i)(processing|thinking|generating|exe
 [[rules]]
 id = "braille_spinner_working"
 state = "working"
-priority = 750
+priority = 800
 region = "bottom_non_empty_lines(8)"
 visible_working = true
 line_regex = ['^[\s\u{2800}-\u{28FF}]+']
+not = [
+  { line_regex = ['^[>❯]$'] },
+]
 
 [[rules]]
 id = "tool_approval_blocked"
