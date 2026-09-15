@@ -1,0 +1,32 @@
+#!/bin/sh
+# HERDR_INTEGRATION_ID=vibe
+# HERDR_INTEGRATION_VERSION=1
+# installed by herdr
+# managed by herdr; reinstalling or updating the integration overwrites this file.
+# add custom hooks beside this file instead of editing it.
+
+set -eu
+
+[ "${HERDR_ENV:-}" = "1" ] || exit 0
+[ -n "${HERDR_SOCKET_PATH:-}" ] || exit 0
+[ -n "${HERDR_PANE_ID:-}" ] || exit 0
+
+# Read hook input from stdin - Vibe sends JSON with session_id and other context
+data="$(cat)"
+
+# Extract session_id using python3 or jq
+session_id="${session_id:-}"
+if command -v python3 >/dev/null 2>&1; then
+    session_id="$(echo "$data" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null)" || true
+elif command -v jq >/dev/null 2>&1; then
+    session_id="$(echo "$data" | jq -r '.session_id // empty' 2>/dev/null)" || true
+fi
+
+[ -n "$session_id" ] || exit 0
+
+# Register agent session with Herdr
+exec herdr pane report-agent-session "${HERDR_PANE_ID}" \
+  --source herdr:vibe \
+  --agent vibe \
+  --agent-session-id "${session_id}" \
+  --session-start-source vibe-hook

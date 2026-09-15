@@ -1,0 +1,16 @@
+#!/bin/sh
+# HERDR_INTEGRATION_ID=vibe
+# HERDR_INTEGRATION_VERSION=1
+# installed by herdr
+# managed by herdr; reinstalling or updating the integration overwrites this file.
+# add custom hooks beside this file instead of editing it.
+
+[ "${HERDR_ENV:-}" = "1" ] || exit 0
+[ -n "${HERDR_SOCKET_PATH:-}" ] || exit 0
+[ -n "${HERDR_PANE_ID:-}" ] || exit 0
+
+# Report idle state after agent turn completes
+exec herdr pane report-agent "${HERDR_PANE_ID}" \
+  --source herdr:vibe \
+  --agent vibe \
+  --state idle

@@ -5,10 +5,11 @@ use super::targets::{
     install_antigravity_cli, install_claude, install_codex, install_copilot, install_cursor,
     install_devin, install_droid, install_grok, install_hermes, install_kilo, install_kimi,
     install_letta, install_mastracode, install_omp, install_opencode, install_pi, install_qodercli,
-    install_qwen, uninstall_antigravity_cli, uninstall_claude, uninstall_codex, uninstall_copilot,
-    uninstall_cursor, uninstall_devin, uninstall_droid, uninstall_grok, uninstall_hermes,
-    uninstall_kilo, uninstall_kimi, uninstall_letta, uninstall_mastracode, uninstall_omp,
-    uninstall_opencode, uninstall_pi, uninstall_qodercli, uninstall_qwen,
+    install_qwen, install_vibe, uninstall_antigravity_cli, uninstall_claude, uninstall_codex,
+    uninstall_copilot, uninstall_cursor, uninstall_devin, uninstall_droid, uninstall_grok,
+    uninstall_hermes, uninstall_kilo, uninstall_kimi, uninstall_letta, uninstall_mastracode,
+    uninstall_omp, uninstall_opencode, uninstall_pi, uninstall_qodercli, uninstall_qwen,
+    uninstall_vibe,
 };
 use super::version::{agent_version_requirement, enforce_agent_version};
 use super::{KIMI_MIN_VERSION, PI_EXTENSION_INSTALL_NAME};
@@ -315,8 +316,21 @@ fn install_target_inner(target: crate::api::schema::IntegrationTarget) -> io::Re
             ]
         }
         crate::api::schema::IntegrationTarget::Vibe => {
-            // Vibe integration hooks not yet implemented
-            vec![]
+            let installed = install_vibe()?;
+            vec![
+                format!(
+                    "installed vibe hook config to {}",
+                    installed.config_path.display()
+                ),
+                format!(
+                    "installed vibe session-start hook to {}",
+                    installed.start_hook_path.display()
+                ),
+                format!(
+                    "installed vibe session-idle hook to {}",
+                    installed.idle_hook_path.display()
+                ),
+            ]
         }
     };
 
@@ -772,8 +786,42 @@ pub(crate) fn uninstall_target(
             messages
         }
         crate::api::schema::IntegrationTarget::Vibe => {
-            // Vibe integration hooks not yet implemented
-            vec![]
+            let result = uninstall_vibe()?;
+            let mut messages = Vec::new();
+            if result.removed_config_file {
+                messages.push(format!(
+                    "removed vibe hook config at {}",
+                    result.config_path.display()
+                ));
+            } else {
+                messages.push(format!(
+                    "no vibe hook config found at {}",
+                    result.config_path.display()
+                ));
+            }
+            if result.removed_start_hook {
+                messages.push(format!(
+                    "removed vibe session-start hook at {}",
+                    result.start_hook_path.display()
+                ));
+            } else {
+                messages.push(format!(
+                    "no vibe session-start hook found at {}",
+                    result.start_hook_path.display()
+                ));
+            }
+            if result.removed_idle_hook {
+                messages.push(format!(
+                    "removed vibe session-idle hook at {}",
+                    result.idle_hook_path.display()
+                ));
+            } else {
+                messages.push(format!(
+                    "no vibe session-idle hook found at {}",
+                    result.idle_hook_path.display()
+                ));
+            }
+            messages
         }
     };
 

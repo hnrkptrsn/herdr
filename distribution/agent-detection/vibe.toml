@@ -1,0 +1,157 @@
+id = "vibe"
+version = "2026.09.14.3"
+min_engine_version = 2
+updated_at = "2026-09-14T00:00:00Z"
+aliases = ["vibe-cli"]
+
+# Evidence notes:
+# Vibe CLI is a Mistral AI coding agent with terminal UI.
+# Idle: Shows a prompt (typically ">" or similar) at the bottom
+# Working: Shows braille spinner characters (U+2800-U+28FF) with activity text
+# Blocked: Shows approval prompts for tool calls
+#
+# Patterns based on Vibe CLI v2.25.4 behavior:
+# - Idle: prompt visible (">", "❯"), waiting for user input
+# - Working: braille spinner + "Thinking..." / "Generating..." / "Streaming..."
+# - Blocked: "Do you want to" / "Press Enter to continue" / approval dialogs
+
+[[rules]]
+id = "prompt_idle"
+state = "idle"
+priority = 760
+region = "bottom_non_empty_lines(8)"
+visible_idle = true
+line_regex = ['^[>❯]$']
+not = [
+  { contains = ["esc to cancel"] },
+  { contains = ["Do you want to"] },
+  { contains = ["Press Enter"] },
+  { line_regex = ['^[\u{2800}-\u{28FF}]+'] },
+]
+
+[[rules]]
+id = "prompt_with_context_idle"
+state = "idle"
+priority = 755
+region = "bottom_non_empty_lines(5)"
+visible_idle = true
+line_regex = ['^[>\u{276F}]\s+\S']
+not = [
+  { contains = ["esc to cancel"] },
+  { contains = ["Press Enter"] },
+]
+
+[[rules]]
+id = "braille_spinner_thinking_working"
+state = "working"
+priority = 950
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+contains = ["Thinking"]
+line_regex = ['^[\s\u{2800}-\u{28FF}]+']
+
+[[rules]]
+id = "braille_spinner_generating_working"
+state = "working"
+priority = 900
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+contains = ["Generating"]
+line_regex = ['^[\s\u{2800}-\u{28FF}]+']
+
+[[rules]]
+id = "braille_spinner_streaming_working"
+state = "working"
+priority = 850
+region = "bottom_non_empty_lines(5)"
+visible_working = true
+contains = ["streaming", "Streaming"]
+
+[[rules]]
+id = "braille_spinner_processing_working"
+state = "working"
+priority = 800
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+line_regex = ['^[\s\u{2800}-\u{28FF}]+\s+(?i)(processing|thinking|generating|executing|running)']
+
+[[rules]]
+id = "braille_spinner_working"
+state = "working"
+priority = 800
+region = "bottom_non_empty_lines(8)"
+visible_working = true
+line_regex = ['^[\s\u{2800}-\u{28FF}]+']
+not = [
+  { line_regex = ['^[>❯]$'] },
+]
+
+[[rules]]
+id = "tool_approval_blocked"
+state = "blocked"
+priority = 950
+region = "whole_recent"
+visible_blocker = true
+contains = ["Do you want to proceed?"]
+any = [
+  { contains = ["allow"] },
+  { contains = ["deny"] },
+  { contains = ["yes"] },
+  { contains = ["no"] },
+]
+
+[[rules]]
+id = "permission_prompt_blocked"
+state = "blocked"
+priority = 900
+region = "after_last_horizontal_rule"
+visible_blocker = true
+any = [
+  { contains = ["Do you want to allow"] },
+  { contains = ["Do you want to run"] },
+  { contains = ["Press Enter to continue"] },
+]
+
+[[rules]]
+id = "enter_to_continue_blocked"
+state = "blocked"
+priority = 850
+region = "bottom_non_empty_lines(8)"
+visible_blocker = true
+contains = ["Press Enter to continue"]
+
+[[rules]]
+id = "approval_options_blocked"
+state = "blocked"
+priority = 800
+region = "whole_recent"
+visible_blocker = true
+any = [
+  { all = [
+    { contains = ["allow"] },
+    { any = [
+      { contains = ["deny"] },
+      { contains = ["reject"] },
+      { contains = ["cancel"] },
+    ] },
+  ] },
+  { all = [
+    { contains = ["yes"] },
+    { any = [
+      { contains = ["no"] },
+      { contains = ["cancel"] },
+    ] },
+  ] },
+]
+
+[[rules]]
+id = "esc_cancel_working"
+state = "working"
+priority = 100
+region = "whole_recent"
+visible_working = true
+contains = ["esc to cancel"]
+line_regex = ['^[\s\u{2800}-\u{28FF}]+']
+not = [
+  { contains = ["Press Enter to continue"] },
+]

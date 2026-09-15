@@ -292,3 +292,20 @@ pub(crate) struct AntigravityCliUninstallResult {
     pub removed_hook_file: bool,
     pub updated_hooks: bool,
 }
+
+#[derive(Debug)]
+pub(crate) struct VibeInstallPaths {
+    pub config_path: PathBuf,
+    pub start_hook_path: PathBuf,
+    pub idle_hook_path: PathBuf,
+}
+
+#[derive(Debug)]
+pub(crate) struct VibeUninstallResult {
+    pub config_path: PathBuf,
+    pub start_hook_path: PathBuf,
+    pub idle_hook_path: PathBuf,
+    pub removed_config_file: bool,
+    pub removed_start_hook: bool,
+    pub removed_idle_hook: bool,
+}

@@ -320,6 +320,28 @@ const GROK_HOOK_ASSET: &str = if cfg!(windows) {
     include_str!("assets/grok/herdr-agent-state.sh")
 };
 const GROK_INTEGRATION_VERSION: u32 = 2;
+const VIBE_HOOK_CONFIG_INSTALL_NAME: &str = "hooks.toml";
+const VIBE_HOOK_SCRIPT_START_INSTALL_NAME: &str = if cfg!(windows) {
+    "herdr-session-start.ps1"
+} else {
+    "herdr-session-start"
+};
+const VIBE_HOOK_SCRIPT_IDLE_INSTALL_NAME: &str = if cfg!(windows) {
+    "herdr-session-idle.ps1"
+} else {
+    "herdr-session-idle"
+};
+const VIBE_HOOK_SCRIPT_START_ASSET: &str = if cfg!(windows) {
+    include_str!("assets/vibe/herdr-session-start.ps1")
+} else {
+    include_str!("assets/vibe/herdr-session-start")
+};
+const VIBE_HOOK_SCRIPT_IDLE_ASSET: &str = if cfg!(windows) {
+    include_str!("assets/vibe/herdr-session-idle.ps1")
+} else {
+    include_str!("assets/vibe/herdr-session-idle")
+};
+const VIBE_INTEGRATION_VERSION: u32 = 1;
 
 pub(crate) const INSTALL_WARNING_PREFIX: &str = "warning:";
 

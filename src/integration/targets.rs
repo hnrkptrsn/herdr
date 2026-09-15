@@ -24,6 +24,7 @@ use super::env::{
     antigravity_cli_dir, claude_dir, codex_dir, copilot_dir, cursor_dir, devin_dir, droid_dir,
     grok_dir, hermes_dir, hermes_plugin_dir, kilo_dir, kimi_dir, letta_dir, mastracode_dir,
     omp_extension_dir, opencode_dir, opencode_state_dir, pi_extension_dir, qodercli_dir, qwen_dir,
+    vibe_dir,
 };
 use super::file_ops::{
     make_executable, remove_dir_all_if_exists, remove_file_if_exists, remove_legacy_bash_hook_file,
@@ -42,6 +43,7 @@ use super::types::{
     LettaUninstallResult, MastracodeInstallPaths, MastracodeUninstallResult, OmpInstallPaths,
     OmpUninstallResult, OpenCodeInstallPaths, OpenCodeUninstallResult, PiUninstallResult,
     QodercliInstallPaths, QodercliUninstallResult, QwenInstallPaths, QwenUninstallResult,
+    VibeInstallPaths, VibeUninstallResult,
 };
 use super::{
     ANTIGRAVITY_CLI_HOOK_ASSET, ANTIGRAVITY_CLI_HOOK_BLOCK_NAME, ANTIGRAVITY_CLI_HOOK_EVENTS,
@@ -62,6 +64,8 @@ use super::{
     OPENCODE_TUI_PLUGIN_SPEC, PI_EXTENSION_ASSET, PI_EXTENSION_INSTALL_NAME, QODERCLI_HOOK_ASSET,
     QODERCLI_HOOK_EVENTS, QODERCLI_HOOK_INSTALL_NAME, QODERCLI_REMOVED_LIFECYCLE_HOOK_EVENTS,
     QWEN_HOOK_ASSET, QWEN_HOOK_EVENTS, QWEN_HOOK_INSTALL_NAME,
+    VIBE_HOOK_CONFIG_INSTALL_NAME, VIBE_HOOK_SCRIPT_START_ASSET, VIBE_HOOK_SCRIPT_START_INSTALL_NAME,
+    VIBE_HOOK_SCRIPT_IDLE_ASSET, VIBE_HOOK_SCRIPT_IDLE_INSTALL_NAME, VIBE_INTEGRATION_VERSION,
 };
 
 fn ensure_extension_dir(dir: &Path, agent: &str) -> io::Result<()> {
@@ -1776,4 +1780,100 @@ pub(crate) fn uninstall_grok() -> io::Result<GrokUninstallResult> {
         removed_hook_file,
         removed_config_file,
     })
+}
+
+pub(crate) fn install_vibe() -> io::Result<VibeInstallPaths> {
+    let dir = vibe_dir()?;
+    if !dir.is_dir() {
+        return Err(io::Error::other(format!(
+            "vibe config directory not found at {}. install vibe cli first",
+            dir.display()
+        )));
+    }
+
+    let hooks_dir = dir.join("hooks");
+    fs::create_dir_all(&hooks_dir)?;
+
+    let start_hook_path = hooks_dir.join(VIBE_HOOK_SCRIPT_START_INSTALL_NAME);
+    fs::write(&start_hook_path, VIBE_HOOK_SCRIPT_START_ASSET)?;
+    make_executable(&start_hook_path)?;
+
+    let idle_hook_path = hooks_dir.join(VIBE_HOOK_SCRIPT_IDLE_INSTALL_NAME);
+    fs::write(&idle_hook_path, VIBE_HOOK_SCRIPT_IDLE_ASSET)?;
+    make_executable(&idle_hook_path)?;
+
+    let config_path = dir.join(VIBE_HOOK_CONFIG_INSTALL_NAME);
+    let hooks_toml_content = vibe_hooks_toml_content(&start_hook_path, &idle_hook_path);
+    fs::write(&config_path, hooks_toml_content)?;
+
+    Ok(VibeInstallPaths {
+        config_path,
+        start_hook_path,
+        idle_hook_path,
+    })
+}
+
+pub(crate) fn uninstall_vibe() -> io::Result<VibeUninstallResult> {
+    let dir = vibe_dir()?;
+    let hooks_dir = dir.join("hooks");
+
+    let start_hook_path = hooks_dir.join(VIBE_HOOK_SCRIPT_START_INSTALL_NAME);
+    let idle_hook_path = hooks_dir.join(VIBE_HOOK_SCRIPT_IDLE_INSTALL_NAME);
+    let config_path = dir.join(VIBE_HOOK_CONFIG_INSTALL_NAME);
+
+    let removed_start_hook = remove_file_if_exists(&start_hook_path)?;
+    let removed_idle_hook = remove_file_if_exists(&idle_hook_path)?;
+    let removed_config_file = remove_file_if_exists(&config_path)?;
+
+    Ok(VibeUninstallResult {
+        config_path,
+        start_hook_path,
+        idle_hook_path,
+        removed_config_file,
+        removed_start_hook,
+        removed_idle_hook,
+    })
+}
+
+/// Generate the hooks.toml content with absolute paths to the hook scripts
+fn vibe_hooks_toml_content(start_hook_path: &Path, idle_hook_path: &Path) -> String {
+    // On Windows, we need to use the .ps1 extensions and proper path format
+    #[cfg(windows)]
+    {
+        let start_path = start_hook_path.to_str().unwrap_or("");
+        let idle_path = idle_hook_path.to_str().unwrap_or("");
+        format!(
+            "# HERDR_INTEGRATION_ID=vibe\n# HERDR_INTEGRATION_VERSION={}\n\n{}{}",
+            VIBE_INTEGRATION_VERSION,
+            vibe_hook_entry("herdr-session-start", "pre_tool", "*", start_path, 5.0),
+            vibe_hook_entry("herdr-session-idle", "post_agent", "", idle_path, 5.0)
+        )
+    }
+
+    #[cfg(not(windows))]
+    {
+        let start_path = start_hook_path.to_str().unwrap_or("");
+        let idle_path = idle_hook_path.to_str().unwrap_or("");
+        format!(
+            "# HERDR_INTEGRATION_ID=vibe\n# HERDR_INTEGRATION_VERSION={}\n\n{}{}",
+            VIBE_INTEGRATION_VERSION,
+            vibe_hook_entry("herdr-session-start", "pre_tool", "*", start_path, 5.0),
+            vibe_hook_entry("herdr-session-idle", "post_agent", "", idle_path, 5.0)
+        )
+    }
+}
+
+/// Generate a single hook entry for vibe's hooks.toml
+fn vibe_hook_entry(name: &str, hook_type: &str, match_pattern: &str, command: &str, timeout: f64) -> String {
+    if match_pattern.is_empty() {
+        format!(
+            "[[hooks]]\nname = \"{}\"\ntype = \"{}\"\ncommand = \"{}\"\ntimeout = {}\n\n",
+            name, hook_type, command, timeout
+        )
+    } else {
+        format!(
+            "[[hooks]]\nname = \"{}\"\ntype = \"{}\"\nmatch = \"{}\"\ncommand = \"{}\"\ntimeout = {}\n\n",
+            name, hook_type, match_pattern, command, timeout
+        )
+    }
 }
